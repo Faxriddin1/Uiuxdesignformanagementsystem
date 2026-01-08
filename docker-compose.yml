@@ -1,7 +1,7 @@
 # =============================================================================
-# Docker Compose для Management System
+# Docker Compose для Management System - Root Configuration
 # =============================================================================
-# Запуск: docker compose up --build
+# Запуск полного стека: make up или docker compose up --build
 # =============================================================================
 
 services:
@@ -13,7 +13,7 @@ services:
     container_name: management_db
     restart: unless-stopped
     env_file:
-      - .env
+      - backend/.env
     environment:
       POSTGRES_DB: ${DB_NAME:-management_system}
       POSTGRES_USER: ${DB_USER:-postgres}
@@ -22,11 +22,11 @@ services:
       # Персистентное хранение данных
       - postgres_data:/var/lib/postgresql/data
       # Инициализационные скрипты (если нужно)
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+      - ./backend/docker/postgres/init:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d management_system"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-management_system}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,25 +34,25 @@ services:
       - management_network
 
   # ---------------------------------------------------------------------------
-  # Django Application
+  # Django Backend
   # ---------------------------------------------------------------------------
-  web:
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
       args:
         ENVIRONMENT: development
-    container_name: management_web
+    container_name: management_backend
     restart: unless-stopped
     env_file:
-      - .env
+      - backend/.env
     environment:
       # Non-secret variables
       - DEBUG=True
       - DJANGO_ENV=development
     volumes:
       # Монтируем код для hot-reload в dev
-      - .:/app
+      - ./backend:/app
       # Игнорируем виртуальное окружение и кэши
       - /app/.venv
       - /app/__pycache__
@@ -77,23 +77,39 @@ services:
       sh -c "python manage.py runserver 0.0.0.0:8000"
 
   # ---------------------------------------------------------------------------
-  # Redis (для кэширования, опционально)
+  # Frontend (Vite Dev Server)
   # ---------------------------------------------------------------------------
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: management_redis
-  #   restart: unless-stopped
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis_data:/data
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "ping"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   networks:
-  #     - management_network
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: development
+    container_name: management_frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # API URL for browser (accessed from host machine)
+      - VITE_API_URL=http://localhost:8000/api/v1
+      # Backend URL for Vite proxy (inside Docker network)
+      - VITE_BACKEND_URL=http://backend:8000
+    volumes:
+      # Монтируем код для hot-reload
+      - .:/app
+      # Игнорируем node_modules
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - management_network
 
 # -----------------------------------------------------------------------------
 # Volumes
@@ -105,8 +121,6 @@ volumes:
     driver: local
   media_volume:
     driver: local
-  # redis_data:
-  #   driver: local
 
 # -----------------------------------------------------------------------------
 # Networks

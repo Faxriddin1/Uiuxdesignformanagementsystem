@@ -54,11 +54,12 @@
       outDir: 'build',
     },
     server: {
-      port: 3000,
-      open: true,
+      port: 5173,
+      host: true,  // Listen on all addresses for Docker
       proxy: {
         '/api': {
-          target: 'http://localhost:8000',
+          // Use environment variable for Docker, fallback to localhost for local dev
+          target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
           changeOrigin: true,
           secure: false,
         },
