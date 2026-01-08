@@ -89,7 +89,10 @@ services:
     env_file:
       - .env
     environment:
+      # API URL for browser (accessed from host machine)
       - VITE_API_URL=http://localhost:8000/api/v1
+      # Backend URL for Vite proxy (inside Docker network)
+      - VITE_BACKEND_URL=http://backend:8000
     volumes:
       # Монтируем код для hot-reload
       - .:/app
