@@ -42,29 +42,9 @@ services:
         ENVIRONMENT: development
     container_name: management_web
     restart: unless-stopped
-    environment:
-      # Django settings
-      - DEBUG=True
-      - DJANGO_ENV=development
-      - SECRET_KEY=django-insecure-dev-key-change-in-production-abc123xyz789
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
-      # Database
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/management_system
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=management_system
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      # CORS
-      - CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
-      - CORS_ALLOW_CREDENTIALS=True
-      # JWT
-      - JWT_ACCESS_TOKEN_LIFETIME_MINUTES=15
-      - JWT_REFRESH_TOKEN_LIFETIME_DAYS=7
-      # Seed data
-      - CREATE_SEED_DATA=True
-      - DEMO_USER_PASSWORD=user123
-      - DEMO_ADMIN_PASSWORD=admin123
+    # Load environment variables from .env file
+    env_file:
+      - .env
     volumes:
       # Монтируем код для hot-reload в dev
       - .:/app
