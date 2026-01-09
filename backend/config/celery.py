@@ -22,8 +22,9 @@ import os
 from celery import Celery
 from celery.schedules import crontab
 
-# Django settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
+# Django settings - use environment-based settings
+django_env = os.environ.get('DJANGO_ENV', 'development')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'config.settings.{django_env}')
 
 # Создаём приложение Celery
 app = Celery('management_system')
