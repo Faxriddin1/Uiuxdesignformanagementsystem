@@ -1,7 +1,8 @@
 # =============================================================================
-# Docker Compose для Management System
+# Docker Compose для Production
 # =============================================================================
-# Запуск: docker compose up --build
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Или просто: docker compose -f docker-compose.prod.yml up -d
 # =============================================================================
 
 services:
@@ -19,9 +20,7 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
-      # Персистентное хранение данных
       - postgres_data:/var/lib/postgresql/data
-      # Инициализационные скрипты (если нужно)
       - ./docker/postgres/init:/docker-entrypoint-initdb.d
     ports:
       - "${DB_PORT_EXTERNAL:-5432}:5432"
@@ -34,47 +33,6 @@ services:
       - management_network
 
   # ---------------------------------------------------------------------------
-  # Django Application
-  # ---------------------------------------------------------------------------
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        ENVIRONMENT: ${ENVIRONMENT:-development}
-    container_name: management_web
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      - DJANGO_ENV=${DJANGO_ENV:-development}
-    volumes:
-      # Монтируем код для hot-reload в dev
-      - .:/app
-      # Игнорируем виртуальное окружение и кэши
-      - /app/.venv
-      - /app/__pycache__
-      # Персистентные директории
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
-    ports:
-      - "${WEB_PORT:-8000}:8000"
-    depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - management_network
-    # Для dev используем runserver вместо gunicorn
-    command: >
-      sh -c "python manage.py runserver 0.0.0.0:8000"
-
-  # ---------------------------------------------------------------------------
   # Redis (для кэширования, Celery, Rate Limiting)
   # ---------------------------------------------------------------------------
   redis:
@@ -85,6 +43,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -94,6 +53,42 @@ services:
       - management_network
 
   # ---------------------------------------------------------------------------
+  # Django Application (Production)
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ENVIRONMENT: production
+    container_name: management_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DJANGO_ENV=production
+    volumes:
+      # В production НЕ монтируем код - используем только копию в образе
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - management_network
+    # Production использует gunicorn из Dockerfile CMD
+
+  # ---------------------------------------------------------------------------
   # Celery Worker (фоновые задачи)
   # ---------------------------------------------------------------------------
   celery:
@@ -101,21 +96,25 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        ENVIRONMENT: ${ENVIRONMENT:-development}
+        ENVIRONMENT: production
     container_name: management_celery
     restart: unless-stopped
     env_file:
       - .env
     environment:
-      - DJANGO_ENV=${DJANGO_ENV:-development}
+      - DJANGO_ENV=production
       - CELERY_BROKER_URL=redis://redis:6379/3
       - CELERY_RESULT_BACKEND=redis://redis:6379/4
-    volumes:
-      - .:/app
-      - /app/.venv
+    # В production НЕ монтируем volumes
     depends_on:
       - db
       - redis
+    healthcheck:
+      test: ["CMD", "celery", "-A", "config", "inspect", "ping", "-d", "celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - management_network
     command: celery -A config worker -l INFO -Q default,notifications,reports,maintenance
@@ -128,25 +127,23 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        ENVIRONMENT: ${ENVIRONMENT:-development}
+        ENVIRONMENT: production
     container_name: management_celery_beat
     restart: unless-stopped
     env_file:
       - .env
     environment:
-      - DJANGO_ENV=${DJANGO_ENV:-development}
+      - DJANGO_ENV=production
       - CELERY_BROKER_URL=redis://redis:6379/3
       - CELERY_RESULT_BACKEND=redis://redis:6379/4
-    volumes:
-      - .:/app
-      - /app/.venv
+    # В production НЕ монтируем volumes
     depends_on:
       - db
       - redis
       - celery
     networks:
       - management_network
-    # --schedule=/tmp/ предотвращает ошибку Permission denied
+    # ВАЖНО: --schedule=/tmp/celerybeat-schedule чтобы избежать проблем с правами
     command: celery -A config beat -l INFO --schedule=/tmp/celerybeat-schedule
 
 # -----------------------------------------------------------------------------
@@ -155,11 +152,11 @@ services:
 volumes:
   postgres_data:
     driver: local
+  redis_data:
+    driver: local
   static_volume:
     driver: local
   media_volume:
-    driver: local
-  redis_data:
     driver: local
 
 # -----------------------------------------------------------------------------
