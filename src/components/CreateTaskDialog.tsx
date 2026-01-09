@@ -33,7 +33,7 @@ import {
 } from './ui/select';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { Button } from './ui/button';
+import { Button } from './ui/Button';
 import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Switch } from './ui/switch';

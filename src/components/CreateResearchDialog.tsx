@@ -23,7 +23,7 @@ import {
 } from './ui/form';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { Button } from './ui/button';
+import { Button } from './ui/Button';
 import { ScrollArea } from './ui/scroll-area';
 import { toast } from 'sonner@2.0.3';
 import { User, Division } from '../types';

@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from './ui/dialog';
-import { Button } from './ui/button';
+import { Button } from './ui/Button';
 import { Textarea } from './ui/textarea';
 
 interface WithdrawModalProps {

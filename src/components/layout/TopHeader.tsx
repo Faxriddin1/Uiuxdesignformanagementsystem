@@ -8,7 +8,7 @@ import { Search, Bell, ChevronDown, Plus } from 'lucide-react';
 import { UserAvatar } from '../ui/UserAvatar';
 import { NotificationCenter } from '../NotificationCenter';
 import { CreateTaskDialog } from '../CreateTaskDialog';
-import { Button } from '../ui/button';
+import { Button } from '../ui/Button';
 import { User, Notification } from '../../types';
 import { getUserRoleLabel } from '../../utils/helpers';
 

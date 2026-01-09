@@ -18,7 +18,7 @@ import {
   DialogDescription,
 } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
-import { Button as ShadcnButton } from '../ui/button';
+import { Button as ShadcnButton } from '../ui/Button';
 import { Button } from '../ui/Button';
 import { Project, User, Research, ProjectStatus } from '../../types';
 import { getDivisionLabel, formatDateTime, canUserEdit } from '../../utils/helpers';
