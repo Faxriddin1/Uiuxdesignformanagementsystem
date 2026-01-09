@@ -6,7 +6,7 @@
 import React from 'react';
 import { User, UserRole } from '../../types';
 import { getUserRoleLabel } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface RoleSwitcherProps {
   currentUser: User;
@@ -14,6 +14,8 @@ interface RoleSwitcherProps {
 }
 
 export function RoleSwitcher({ currentUser, onUserChange }: RoleSwitcherProps) {
+  const { users } = useUsers();
+  
   return (
     <div className="fixed bottom-4 right-4 bg-white rounded-xl shadow-xl border border-gray-200 p-4 max-w-xs z-50">
       <div className="mb-3">

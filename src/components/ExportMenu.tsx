@@ -6,7 +6,7 @@
 import { Download, Printer, FileText, Table, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { Task, Project, Research, User } from '../types';
-import { users } from '../data/mockData';
+import { useUsers, getUsersSync } from '../hooks/useUsers';
 import { getTaskStatusText } from '../utils/statusHelpers';
 import { getUserRoleLabel } from '../utils/helpers';
 
@@ -18,6 +18,7 @@ interface ExportMenuProps {
 
 export function ExportMenu({ data, type, currentUser }: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const users = getUsersSync();
 
   /**
    * Экспорт в CSV

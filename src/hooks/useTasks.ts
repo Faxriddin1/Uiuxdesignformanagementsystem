@@ -24,13 +24,16 @@ export function useTasks(params?: TasksListParams): UseTasksResult {
   const [totalCount, setTotalCount] = useState(0);
 
   const fetchTasks = useCallback(async () => {
+    console.log('📋 useTasks: Начинаем загрузку задач...', params);
     setIsLoading(true);
     setError(null);
     try {
       const response = await tasksApi.list(params);
+      console.log('✅ useTasks: Загружено задач:', response.results.length, response);
       setTasks(response.results);
       setTotalCount(response.count);
     } catch (err) {
+      console.error('❌ useTasks: Ошибка загрузки:', err);
       setError(err instanceof Error ? err.message : 'Ошибка загрузки задач');
     } finally {
       setIsLoading(false);

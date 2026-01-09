@@ -3,7 +3,7 @@
 import { FileText, Download, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { Task, User } from '../types';
 import { getVersionHistory, getVersionStatusText, getVersionStatusColor } from '../utils/resultVersions';
-import { users } from '../data/mockData';
+import { useUsers } from '../hooks/useUsers';
 
 interface ResultVersionHistoryProps {
   task: Task;
@@ -14,6 +14,7 @@ interface ResultVersionHistoryProps {
  * С указанием статуса каждой версии (текущая, отозвана, возвращена на доработку)
  */
 export function ResultVersionHistory({ task }: ResultVersionHistoryProps) {
+  const { users } = useUsers();
   const versions = getVersionHistory(task);
 
   if (versions.length === 0) {

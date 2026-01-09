@@ -2,7 +2,7 @@
 
 import { Users } from 'lucide-react';
 import { User } from '../types';
-import { users } from '../data/mockData';
+import { useUsers } from '../hooks/useUsers';
 
 interface CoAssigneesListProps {
   coAssigneeIds: string[];
@@ -13,6 +13,8 @@ interface CoAssigneesListProps {
  * Компонент отображает список соисполнителей с аватарами
  */
 export function CoAssigneesList({ coAssigneeIds, className = '' }: CoAssigneesListProps) {
+  const { users } = useUsers();
+  
   if (!coAssigneeIds || coAssigneeIds.length === 0) {
     return null;
   }

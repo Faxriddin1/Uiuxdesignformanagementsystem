@@ -77,12 +77,13 @@ class Project(FullAuditModel):
         null=True,
         blank=True,
         related_name='managed_projects',
+        db_index=True,
         verbose_name='Руководитель проекта'
     )
     members = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
+        related_name='project_members',
         blank=True,
-        related_name='project_memberships',
         verbose_name='Участники'
     )
     
@@ -180,6 +181,7 @@ class ProjectHistory(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         verbose_name='Пользователь'
     )
     action = models.CharField(

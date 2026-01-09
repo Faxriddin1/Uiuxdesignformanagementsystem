@@ -28,7 +28,7 @@ import {
   formatDateTime,
   canUserApprove
 } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 /**
  * Получить метку категории задачи
@@ -56,6 +56,7 @@ interface TaskDetailProps {
 }
 
 export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDetailProps) {
+  const { users } = useUsers();
   const [resultDescription, setResultDescription] = useState(task.resultDescription || '');
   const [comment, setComment] = useState('');
   const [showHistory, setShowHistory] = useState(false);
@@ -65,20 +66,15 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
   const isAssignee = currentUser.id === task.assigneeId;
   const canApprove = canUserApprove(currentUser);
 
-  const handleStartWork = () => {
-    onUpdateTask(task.id, {
-      status: 'in_progress',
-      history: [
-        ...task.history,
-        {
-          id: `h${Date.now()}`,
-          userId: currentUser.id,
-          action: 'Взята в работу',
-          details: 'Статус изменен на "В работе"',
-          timestamp: new Date(),
-        },
-      ],
-    });
+  const handleStartWork = async () => {
+    try {
+      const { tasksApi } = await import('../../api/tasks');
+      await tasksApi.take(task.id);
+      onUpdateTask(task.id, { status: 'in_progress' });
+    } catch (error) {
+      console.error('Ошибка при взятии задачи в работу:', error);
+      alert('Не удалось взять задачу в работу');
+    }
   };
 
   const handleSubmitForReview = () => {

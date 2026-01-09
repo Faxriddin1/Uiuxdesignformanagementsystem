@@ -15,7 +15,7 @@ import { StatusBadge } from '../ui/StatusBadge';
 import { UserAvatar } from '../ui/UserAvatar';
 import { Research, User, ResearchStatus } from '../../types';
 import { getResearchStatusLabel, getResearchStatusColor, getDivisionLabel } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 import { CreateResearchDialog } from '../CreateResearchDialog';
 
@@ -28,6 +28,7 @@ interface ResearchesProps {
 }
 
 export function Researches({ researches, currentUser, onResearchClick, onCreateResearch, onBack }: ResearchesProps) {
+  const { users } = useUsers();
   const [filterStatus, setFilterStatus] = useState<ResearchStatus | 'all'>('all');
   const [showOnlyWithAccess, setShowOnlyWithAccess] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');

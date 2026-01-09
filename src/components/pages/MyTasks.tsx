@@ -15,7 +15,7 @@ import { DeadlineBadge } from '../ui/DeadlineBadge';
 import { Task, User } from '../../types';
 import { getTaskStatusLabel, getTaskStatusColor, isTaskOverdue, getDaysUntilDeadline } from '../../utils/helpers';
 import { CheckSquare, List, LayoutGrid } from 'lucide-react';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface MyTasksProps {
   tasks: Task[];
@@ -25,6 +25,7 @@ interface MyTasksProps {
 }
 
 export function MyTasks({ tasks, currentUser, onTaskClick, onBack }: MyTasksProps) {
+  const { users } = useUsers();
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   /**

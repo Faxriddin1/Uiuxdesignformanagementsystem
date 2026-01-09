@@ -28,7 +28,7 @@ import {
   formatDateTime,
   canUserApprove
 } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface ResearchDetailProps {
   research: Research;
@@ -45,6 +45,7 @@ export function ResearchDetail({
   onUpdateResearch,
   onCreateProject 
 }: ResearchDetailProps) {
+  const { users } = useUsers();
   const [comment, setComment] = useState('');
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [selectedDivision, setSelectedDivision] = useState<Division>('it_projects');

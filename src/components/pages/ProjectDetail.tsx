@@ -22,7 +22,7 @@ import { Button as ShadcnButton } from '../ui/Button';
 import { Button } from '../ui/Button';
 import { Project, User, Research, ProjectStatus } from '../../types';
 import { getDivisionLabel, formatDateTime, canUserEdit } from '../../utils/helpers';
-import { users, researches } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface ProjectDetailProps {
   project: Project;
@@ -39,6 +39,7 @@ export function ProjectDetail({
   onUpdateProject,
   onViewResearch 
 }: ProjectDetailProps) {
+  const { users } = useUsers();
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const responsible = users.find(u => u.id === project.responsibleId);

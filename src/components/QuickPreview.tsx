@@ -11,7 +11,7 @@ import { TaskTypeBadge } from './TaskTypeBadge';
 import { DeadlineBadge } from './ui/DeadlineBadge';
 import { AttachmentsList } from './ui/AttachmentsList';
 import { Button } from './ui/Button';
-import { users } from '../data/mockData';
+import { useUsers } from '../hooks/useUsers';
 import { getTaskStatusText, getTaskStatusColor } from '../utils/statusHelpers';
 import { getCurrentVersion } from '../utils/resultVersions';
 
@@ -34,6 +34,8 @@ export function QuickPreview({
   onReject,
   position = 'right'
 }: QuickPreviewProps) {
+  const { users } = useUsers();
+  
   // Получить пользователя по ID
   const getUserById = (userId: string) => users.find(u => u.id === userId);
 

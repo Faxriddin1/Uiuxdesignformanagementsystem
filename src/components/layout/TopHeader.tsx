@@ -3,14 +3,15 @@
  * Содержит поиск, уведомления и профиль пользователя
  */
 
-import React, { useState } from 'react';
-import { Search, Bell, ChevronDown, Plus } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Bell, ChevronDown, Plus, User as UserIcon, Settings, LogOut } from 'lucide-react';
 import { UserAvatar } from '../ui/UserAvatar';
 import { NotificationCenter } from '../NotificationCenter';
 import { CreateTaskDialog } from '../CreateTaskDialog';
 import { Button } from '../ui/Button';
 import { User, Notification } from '../../types';
 import { getUserRoleLabel } from '../../utils/helpers';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface TopHeaderProps {
   currentUser: User;
@@ -27,7 +28,24 @@ export function TopHeader({
   onMarkAsRead,
   onMarkAllAsRead 
 }: TopHeaderProps) {
+  const { logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Закрытие меню при клике вне его
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showUserMenu]);
   
   // Подсчет непрочитанных уведомлений для текущего пользователя
   const unreadCount = notifications.filter(
@@ -72,14 +90,72 @@ export function TopHeader({
         </button>
 
         {/* Профиль пользователя */}
-        <button className="flex items-center gap-3 hover:bg-gray-50 rounded-lg pl-1 pr-3 py-1 transition-colors">
-          <UserAvatar name={currentUser.name} avatar={currentUser.avatar} />
-          <div className="text-left">
-            <p className="text-sm text-gray-900">{currentUser.name}</p>
-            <p className="text-xs text-gray-500">{getUserRoleLabel(currentUser.role)}</p>
-          </div>
-          <ChevronDown className="text-gray-400" size={16} />
-        </button>
+        <div className="relative" ref={userMenuRef}>
+          <button 
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-3 hover:bg-gray-50 rounded-lg pl-1 pr-3 py-1 transition-colors"
+          >
+            <UserAvatar name={currentUser.name} avatar={currentUser.avatar} />
+            <div className="text-left">
+              <p className="text-sm text-gray-900">{currentUser.name}</p>
+              <p className="text-xs text-gray-500">{getUserRoleLabel(currentUser.role)}</p>
+            </div>
+            <ChevronDown className="text-gray-400" size={16} />
+          </button>
+
+          {/* Выпадающее меню пользователя */}
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+              {/* Информация о пользователе */}
+              <div className="px-4 py-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
+                <p className="text-xs text-gray-500">{currentUser.email}</p>
+                <p className="text-xs text-gray-500 mt-1">{getUserRoleLabel(currentUser.role)}</p>
+              </div>
+
+              {/* Меню опций */}
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    // Здесь можно добавить навигацию к профилю
+                    alert('Профиль пользователя - в разработке');
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                >
+                  <UserIcon size={16} className="text-gray-400" />
+                  Мой профиль
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    // Здесь можно добавить навигацию к настройкам
+                    alert('Настройки - в разработке');
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                >
+                  <Settings size={16} className="text-gray-400" />
+                  Настройки
+                </button>
+              </div>
+
+              {/* Выход */}
+              <div className="border-t border-gray-100 py-1">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    logout();
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3"
+                >
+                  <LogOut size={16} />
+                  Выйти
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Панель уведомлений */}

@@ -7,7 +7,7 @@ import { Bell, X, CheckCircle, AlertCircle, Clock, MessageSquare, FileText, Arro
 import { useState } from 'react';
 import { Notification, NotificationType, User } from '../types';
 import { UserAvatar } from './ui/UserAvatar';
-import { users } from '../data/mockData';
+import { useUsers } from '../hooks/useUsers';
 
 interface NotificationCenterProps {
   notifications: Notification[];
@@ -110,6 +110,7 @@ export function NotificationCenter({
   /**
    * Получить пользователя по ID
    */
+  const { users } = useUsers();
   const getUserById = (userId?: string) => {
     if (!userId) return null;
     return users.find(u => u.id === userId);

@@ -1,4 +1,15 @@
-// Демонстрационная страница для тестирования новых компонентов
+// Страница удалена: демо-компоненты отключены и не используются в продакшене
+import React from 'react';
+import { User } from '../../types';
+
+interface ComponentsDemoProps {
+  currentUser: User;
+  onNavigateBack: () => void;
+}
+
+export function ComponentsDemo({ currentUser, onNavigateBack }: ComponentsDemoProps) {
+  return null;
+}
 
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
@@ -11,9 +22,10 @@ import { RejectModal } from '../RejectModal';
 import { ApproveModal } from '../ApproveModal';
 import { StatusBadge } from '../ui/StatusBadge';
 import { Button } from '../ui/Button';
-import { tasks } from '../../data/mockData';
 import { getTaskStatusText, getTaskStatusColor } from '../../utils/statusHelpers';
 import { User } from '../../types';
+// Демо данные отключены; используем пустой список, чтобы страница не тянула mockData
+const tasks: any[] = [];
 
 interface ComponentsDemoProps {
   currentUser: User;

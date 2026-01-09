@@ -145,6 +145,13 @@ export const tasksApi = {
   },
 
   /**
+   * Взять задачу в работу
+   */
+  async take(id: string): Promise<Task> {
+    return apiClient.post<Task>(`/tasks/${id}/take/`, {});
+  },
+
+  /**
    * Изменить статус задачи
    */
   async changeStatus(id: string, status: string, comment?: string): Promise<Task> {

@@ -6,27 +6,24 @@
 
 services:
   # ---------------------------------------------------------------------------
-  # PostgreSQL Database
+  # PostgreSQL Database - Единая БД с разделением по схемам
   # ---------------------------------------------------------------------------
+  
   db:
     image: postgres:16-alpine
     container_name: management_db
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
-      POSTGRES_DB: ${DB_NAME:-management_system}
+      POSTGRES_DB: ${DB_NAME:-management_db}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
-      # Персистентное хранение данных
       - postgres_data:/var/lib/postgresql/data
-      # Инициализационные скрипты (если нужно)
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+      - ./scripts/init_schemas.sql:/docker-entrypoint-initdb.d/init_schemas.sql:ro
     ports:
-      - "${DB_PORT_EXTERNAL:-5432}:5432"
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-management_system}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-management_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,6 +45,11 @@ services:
       - .env
     environment:
       - DJANGO_ENV=${DJANGO_ENV:-development}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       # Монтируем код для hot-reload в dev
       - .:/app
@@ -59,9 +61,6 @@ services:
       - media_volume:/app/media
     ports:
       - "${WEB_PORT:-8000}:8000"
-    depends_on:
-      db:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/"]
       interval: 30s
@@ -153,6 +152,7 @@ services:
 # Volumes
 # -----------------------------------------------------------------------------
 volumes:
+  # Единый volume для базы данных
   postgres_data:
     driver: local
   static_volume:

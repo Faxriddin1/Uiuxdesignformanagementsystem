@@ -13,7 +13,7 @@ import { DeadlineBadge } from '../ui/DeadlineBadge';
 import { QuickPreview } from '../QuickPreview';
 import { Task, User } from '../../types';
 import { getDivisionLabel, formatDateTime } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface ReviewQueueProps {
   tasks: Task[];
@@ -23,6 +23,7 @@ interface ReviewQueueProps {
 }
 
 export function ReviewQueue({ tasks, currentUser, onTaskClick, onBack }: ReviewQueueProps) {
+  const { users } = useUsers();
   const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
 
   /**

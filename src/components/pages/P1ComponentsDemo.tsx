@@ -1,4 +1,15 @@
-// Демонстрационная страница для тестирования P1 компонентов
+// Страница удалена: демо-компоненты отключены и не используются в продакшене
+import React from 'react';
+import { User } from '../../types';
+
+interface P1ComponentsDemoProps {
+  currentUser: User;
+  onNavigateBack: () => void;
+}
+
+export function P1ComponentsDemo({ currentUser, onNavigateBack }: P1ComponentsDemoProps) {
+  return null;
+}
 
 import { ArrowLeft, Bell, Save } from 'lucide-react';
 import { useState } from 'react';
@@ -10,8 +21,12 @@ import { SavedViewsManager } from '../SavedViewsManager';
 import { QuickPreview } from '../QuickPreview';
 import { DiffView, SimpleDiffView } from '../DiffView';
 import { ExportMenu } from '../ExportMenu';
-import { notifications, savedViews, fieldChanges, tasks } from '../../data/mockData';
 import { User, Notification, SavedView, FieldChange } from '../../types';
+// Демо данные отключены; локальные пустые списки вместо mockData
+const notifications: Notification[] = [];
+const savedViews: SavedView[] = [];
+const fieldChanges: FieldChange[] = [];
+const tasks: any[] = [];
 
 interface P1ComponentsDemoProps {
   currentUser: User;

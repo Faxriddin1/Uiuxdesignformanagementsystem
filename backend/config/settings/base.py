@@ -88,6 +88,8 @@ LOCAL_APPS = [
     'apps.research',            # R&D исследования
     'apps.notifications',       # Уведомления
     'apps.analytics',           # Аналитика
+    'apps.external_packages',   # Внешние пакеты
+    'apps.audit_logs',          # Логи и аудит
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -108,8 +110,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
-    # Кастомный middleware для аудит-логов
-    'apps.core.middleware.AuditLogMiddleware',
+    # Audit logging middleware
+    'apps.audit_logs.middleware.AuditMiddleware',
+    'apps.audit_logs.middleware.LoginAuditMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -141,15 +144,27 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # =============================================================================
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 #
-# ВАЖНО: В production обязательно используйте DATABASE_URL или отдельные
-# переменные DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+# ВАЖНО: Используем отдельные базы данных для каждого модуля
 
 DATABASES = {
-    'default': env.db(
-        'DATABASE_URL',
-        default=f"postgres://{env('DB_USER', default='postgres')}:{env('DB_PASSWORD', default='postgres')}@{env('DB_HOST', default='localhost')}:{env('DB_PORT', default='5432')}/{env('DB_NAME', default='management_system')}"
-    )
+    # Единая база данных с разделением по схемам
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME', default='management_db'),
+        'USER': env('DB_USER', default='postgres'),
+        'PASSWORD': env('DB_PASSWORD', default='postgres'),
+        'HOST': env('DB_HOST', default='db'),
+        'PORT': env('DB_PORT', default='5432'),
+        'ATOMIC_REQUESTS': True,
+        'CONN_MAX_AGE': 600,
+        'OPTIONS': {
+            'options': '-c search_path=public,users_schema,tasks_schema,projects_schema,packages_schema,logs_schema,files_schema'
+        }
+    },
 }
+
+# Database Router для маршрутизации запросов к соответствующим схемам
+DATABASE_ROUTERS = ['config.db_router.SchemaRouter']
 
 # =============================================================================
 # Custom User Model

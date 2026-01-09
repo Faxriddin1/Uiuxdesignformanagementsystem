@@ -44,6 +44,9 @@ api_v1_patterns = [
     # Аналитика
     path('analytics/', include('apps.analytics.urls')),
     
+    # Внешние пакеты
+    path('external-packages/', include('apps.external_packages.urls')),
+    
     # Health check
     path('health/', include('apps.core.urls')),
 ]

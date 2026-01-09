@@ -12,6 +12,7 @@ Core Models - Базовые абстрактные модели
 
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -144,26 +145,23 @@ class AuditModel(models.Model):
     Абстрактная модель для аудита изменений.
     
     Хранит информацию о том, кто создал и изменил запись.
-    
-    ВАЖНО: created_by и updated_by заполняются автоматически
-    через middleware или в сервисном слое.
     """
     
     created_by = models.ForeignKey(
-        'accounts.User',
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='%(class)s_created',
-        verbose_name='Создано пользователем'
+        related_name='%(app_label)s_%(class)s_created',
+        verbose_name='Создатель'
     )
     updated_by = models.ForeignKey(
-        'accounts.User',
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='%(class)s_updated',
-        verbose_name='Изменено пользователем'
+        related_name='%(app_label)s_%(class)s_updated',
+        verbose_name='Редактор'
     )
     
     class Meta:

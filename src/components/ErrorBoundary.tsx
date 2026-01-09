@@ -82,7 +82,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }
 
     // В production можно отправлять в Sentry/LogRocket/etc
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.MODE === 'production') {
       console.error('Error caught by ErrorBoundary:', error);
       // Пример: Sentry.captureException(error, { extra: errorInfo });
     } else {
@@ -144,7 +144,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </p>
 
               {/* Детали ошибки (только для разработки) */}
-              {(showDetails || process.env.NODE_ENV === 'development') && error && (
+              {(showDetails || import.meta.env.MODE === 'development') && error && (
                 <details className="mt-4">
                   <summary className="cursor-pointer text-sm font-medium text-gray-500 hover:text-gray-700">
                     Техническая информация

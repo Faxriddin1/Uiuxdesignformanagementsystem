@@ -6,13 +6,14 @@
 import { ArrowRight, Calendar, User as UserIcon, Tag, FileText, Clock, Users } from 'lucide-react';
 import { FieldChange, User } from '../types';
 import { UserAvatar } from './ui/UserAvatar';
-import { users } from '../data/mockData';
+import { useUsers } from '../hooks/useUsers';
 
 interface DiffViewProps {
   changes: FieldChange[];
 }
 
 export function DiffView({ changes }: DiffViewProps) {
+  const { users } = useUsers();
   // Получить пользователя по ID
   const getUserById = (userId: string) => users.find(u => u.id === userId);
 

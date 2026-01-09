@@ -21,7 +21,7 @@ import {
   getResearchStatusColor,
   getDivisionLabel 
 } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface ProjectsAndResearchProps {
   projects: Project[];
@@ -58,6 +58,7 @@ export function ProjectsAndResearch({
   const [showOnlyWithAccess, setShowOnlyWithAccess] = useState(false);
   const [researchViewMode, setResearchViewMode] = useState<'kanban' | 'list'>('kanban');
 
+  const { users } = useUsers();
   /**
    * Получить пользователя по ID
    */
@@ -274,7 +275,7 @@ export function ProjectsAndResearch({
           {/* Отображение проектов */}
           {filteredProjects.length === 0 ? (
             <EmptyState
-              icon={FolderKanban}
+              icon={<FolderKanban size={32} />}
               title="Проекты не найдены"
               description="Попробуйте изменить фильтры или создать новый проект"
             />
@@ -385,7 +386,7 @@ export function ProjectsAndResearch({
           {/* Отображение исследований */}
           {filteredResearches.length === 0 ? (
             <EmptyState
-              icon={FlaskConical}
+              icon={<FlaskConical size={32} />}
               title="Исследования не найдены"
               description="Попробуйте изменить фильтры или создать новое исследование"
             />

@@ -7,7 +7,7 @@ import React from 'react';
 import { AlertCircle, CheckCircle, Clock, Eye } from 'lucide-react';
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import { DashboardStats, User } from '../../types';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 import { UserAvatar } from '../ui/UserAvatar';
 
 interface DashboardProps {
@@ -70,6 +70,7 @@ export function Dashboard({ stats, onNavigateToTasks, currentUser }: DashboardPr
   /**
    * Получить информацию о пользователе по ID
    */
+  const { users } = useUsers();
   const getUserById = (userId: string): User | undefined => {
     return users.find(u => u.id === userId);
   };

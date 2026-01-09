@@ -5,7 +5,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { User } from '../types';
 import { UserAvatar } from './ui/UserAvatar';
-import { users } from '../data/mockData';
+import { useUsers } from '../hooks/useUsers';
 
 interface MentionInputProps {
   value: string;
@@ -14,7 +14,7 @@ interface MentionInputProps {
   className?: string;
   minRows?: number;
   maxRows?: number;
-  availableUsers?: User[]; // Пользователи для автокомплита (по умолчанию - все)
+  availableUsers?: User[]; // Пользователи для автокомплита (по умолчанию - из API)
 }
 
 export function MentionInput({
@@ -24,8 +24,11 @@ export function MentionInput({
   className = '',
   minRows = 3,
   maxRows = 10,
-  availableUsers = users
+  availableUsers
 }: MentionInputProps) {
+  const { users: apiUsers } = useUsers();
+  const usersForMention = availableUsers || apiUsers;
+  
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
   const [searchQuery, setSearchQuery] = useState('');
@@ -143,7 +146,7 @@ export function MentionInput({
   /**
    * Фильтрация пользователей для автокомплита
    */
-  const filteredUsers = availableUsers.filter(user => 
+  const filteredUsers = usersForMention.filter(user => 
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5); // Показывать максимум 5 результатов

@@ -264,8 +264,7 @@ const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
       ├── AllTasks.tsx                ✅ + SavedViewsManager
       ├── ReviewQueue.tsx             ✅ + QuickPreview
       ├── IntegrationDemo.tsx         ✅ Новая страница с обзором
-      ├── P1ComponentsDemo.tsx        ✅ Демо P1 компонентов
-      └── ComponentsDemo.tsx          ✅ Демо P0 компонентов
+      
 ```
 
 ---
@@ -293,8 +292,6 @@ const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
 
 При возникновении вопросов обращайтесь к разработчикам или изучите демо-страницы:
 - `/integration` - Обзор интеграции
-- `/p1-demo` - Демо P1 компонентов
-- `/demo` - Демо P0 компонентов
 
 ---
 

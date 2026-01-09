@@ -17,7 +17,7 @@ import { SavedViewsManager } from '../SavedViewsManager';
 import { CreateTaskDialog } from '../CreateTaskDialog';
 import { Task, User, Division, TaskStatus, SavedView } from '../../types';
 import { getTaskStatusLabel, getTaskStatusColor, getDivisionLabel, isTaskOverdue, formatDateTime } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface TasksProps {
   tasks: Task[];
@@ -29,6 +29,8 @@ interface TasksProps {
 type TabType = 'my' | 'all' | 'review' | 'external_org' | 'external_branch' | 'external_management';
 
 export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
+  const { users } = useUsers();
+  
   // Вкладки
   const [activeTab, setActiveTab] = useState<TabType>('my');
   
@@ -382,10 +384,8 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
                 className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Все отделы</option>
-                <option value="it_support">IT Поддержка</option>
-                <option value="it_development">IT Разработка</option>
-                <option value="it_analytics">IT Аналитика</option>
-                <option value="it_infrastructure">IT Инфраструктура</option>
+                <option value="rnd">Отдел R&D</option>
+                <option value="it_projects">Отдел IT-проектов</option>
               </select>
 
               {/* Фильтр по статусу */}

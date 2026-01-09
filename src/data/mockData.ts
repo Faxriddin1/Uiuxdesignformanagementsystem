@@ -1,73 +1,24 @@
 // Моковые данные для демонстрации системы
+// ВАЖНО: Пользователи загружаются из API через хук useUsers
 
 import { User, Task, Project, Research, DashboardStats, ExternalPackage, Notification, SavedView, FieldChange } from '../types';
 
 /**
- * Текущий пользователь (по умолчанию - Начальник Управления)
+ * @deprecated Используйте useUsers хук для получения пользователей из API
+ * Этот массив пустой и оставлен для совместимости
  */
-export const currentUser: User = {
-  id: 'u1',
-  name: 'Иванов Иван Иванович',
-  role: 'management_head',
-  division: 'rnd',
-  email: 'ivanov@company.uz',
-};
+export const users: User[] = [];
 
 /**
- * Список всех пользователей системы
+ * @deprecated Используйте useUsers хук
  */
-export const users: User[] = [
-  currentUser,
-  {
-    id: 'u2',
-    name: 'Петров Петр Петрович',
-    role: 'division_head',
-    division: 'rnd',
-    email: 'petrov@company.uz',
-  },
-  {
-    id: 'u3',
-    name: 'Сидорова Анна Сергеевна',
-    role: 'employee',
-    division: 'rnd',
-    email: 'sidorova@company.uz',
-  },
-  {
-    id: 'u4',
-    name: 'Алиев Рустам Бахтиярович',
-    role: 'employee',
-    division: 'rnd',
-    email: 'aliev@company.uz',
-  },
-  {
-    id: 'u5',
-    name: 'Каримов Тимур Рашидович',
-    role: 'division_head',
-    division: 'it_projects',
-    email: 'karimov@company.uz',
-  },
-  {
-    id: 'u6',
-    name: 'Усманова Диана Маратовна',
-    role: 'employee',
-    division: 'it_projects',
-    email: 'usmanova@company.uz',
-  },
-  {
-    id: 'u7',
-    name: 'Хамидов Азиз Шерзодович',
-    role: 'employee',
-    division: 'it_projects',
-    email: 'khamidov@company.uz',
-  },
-  {
-    id: 'u8',
-    name: 'Рахимов Джамшид Алишерович',
-    role: 'department_head',
-    division: 'rnd',
-    email: 'rakhimov@company.uz',
-  },
-];
+export const currentUser: User = {
+  id: '',
+  name: '',
+  role: 'employee',
+  division: 'rnd',
+  email: '',
+};
 
 /**
  * Список задач (обновленный с T1/T2, маршрутами приемки, версиями результатов)

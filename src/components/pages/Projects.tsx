@@ -19,7 +19,7 @@ import {
   getProjectStatusColor,
   getDivisionLabel 
 } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface ProjectsProps {
   projects: Project[];
@@ -30,6 +30,7 @@ interface ProjectsProps {
 }
 
 export function Projects({ projects, currentUser, onProjectClick, onCreateProject, onBack }: ProjectsProps) {
+  const { users } = useUsers();
   const [filterStatus, setFilterStatus] = useState<ProjectStatus | 'all'>('all');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 

@@ -17,7 +17,7 @@ import { UserAvatar } from '../ui/UserAvatar';
 import { SavedViewsManager } from '../SavedViewsManager';
 import { Task, User, Division, TaskStatus, SavedView } from '../../types';
 import { getTaskStatusLabel, getTaskStatusColor, getDivisionLabel, isTaskOverdue } from '../../utils/helpers';
-import { users } from '../../data/mockData';
+import { useUsers } from '../../hooks/useUsers';
 
 interface AllTasksProps {
   tasks: Task[];
@@ -28,6 +28,7 @@ interface AllTasksProps {
 }
 
 export function AllTasks({ tasks, currentUser, onTaskClick, onCreateTask, onBack }: AllTasksProps) {
+  const { users } = useUsers();
   const [filterDivision, setFilterDivision] = useState<Division | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<TaskStatus | 'all'>('all');
   const [filterOverdue, setFilterOverdue] = useState(false);

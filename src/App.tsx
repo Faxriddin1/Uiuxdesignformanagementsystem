@@ -14,25 +14,20 @@ import { ProjectsAndResearch } from './components/pages/ProjectsAndResearch';
 import { ProjectDetail } from './components/pages/ProjectDetail';
 import { ResearchDetail } from './components/pages/ResearchDetail';
 import { ExternalPackages } from './components/pages/ExternalPackages';
-import { ComponentsDemo } from './components/pages/ComponentsDemo';
-import { P1ComponentsDemo } from './components/pages/P1ComponentsDemo';
-import { IntegrationDemo } from './components/pages/IntegrationDemo';
 import { LoginPage } from './components/pages/LoginPage';
-import { RoleSwitcher } from './components/ui/RoleSwitcher';
+import { CreateProjectDialog } from './components/CreateProjectDialog';
+import { CreateExternalPackageDialog } from './components/CreateExternalPackageDialog';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useProjects } from './hooks/useProjects';
 import { useTasks } from './hooks/useTasks';
 import { useResearches } from './hooks/useResearch';
+import { useExternalPackages } from './hooks/useExternalPackages';
 import { useNotifications } from './hooks/useNotifications';
-import { projectsApi, tasksApi, researchApi } from './api';
+import { projectsApi, tasksApi, researchApi, externalPackagesApi } from './api';
 import { Task, Project, Research, User, ExternalPackage, Notification } from './types';
-import { 
-  currentUser as defaultUser, 
-  externalPackages as initialPackages, 
-  dashboardStats 
-} from './data/mockData';
+import { isTaskOverdue } from './utils/helpers';
 
-type Page = 'dashboard' | 'tasks' | 'projects-and-research' | 'external-packages' | 'demo' | 'p1-demo' | 'integration';
+type Page = 'dashboard' | 'tasks' | 'projects-and-research' | 'external-packages';
 
 // Основной компонент приложения
 function AppContent() {
@@ -42,10 +37,17 @@ function AppContent() {
   const { projects, isLoading: projectsLoading, refetch: refetchProjects, updateProject: apiUpdateProject } = useProjects();
   const { tasks, isLoading: tasksLoading, refetch: refetchTasks, updateTask: apiUpdateTask } = useTasks();
   const { researches, isLoading: researchesLoading, refetch: refetchResearches, updateResearch: apiUpdateResearch } = useResearches();
+  const { packages, isLoading: packagesLoading, refetch: refetchPackages, createPackage } = useExternalPackages();
   const { notifications: apiNotifications, markAsRead: apiMarkAsRead, markAllAsRead: apiMarkAllAsRead } = useNotifications();
   
   // Состояние текущего пользователя
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
+  const [currentUser, setCurrentUser] = useState<User>({
+    id: '',
+    name: '',
+    email: '',
+    role: 'employee',
+    division: 'rnd',
+  });
   
   // Обновляем currentUser когда authUser загружается
   useEffect(() => {
@@ -64,8 +66,7 @@ function AppContent() {
   // Состояние текущей страницы
   const [currentPage, setCurrentPage] = useState<Page>('projects-and-research');
   
-  // Состояние данных (для локального обновления и external packages)
-  const [externalPackages, setExternalPackages] = useState<ExternalPackage[]>(initialPackages);
+  // Внешние пакеты загружаются из API через useExternalPackages
   
   // Конвертируем уведомления из API формата в локальный формат
   const notifications: Notification[] = apiNotifications.map(n => ({
@@ -121,55 +122,48 @@ function AppContent() {
   // Конвертируем tasks из API формата в локальный формат
   const localTasks: Task[] = tasks.map(t => ({
     id: t.id,
-    code: t.code,
     title: t.title,
-    description: t.description,
-    type: (t.task_type || 'execution') as Task['type'],
+    description: t.description || '',
+    taskType: (t.task_type === 'T1' ? 'T1' : 'T2') as Task['taskType'],
+    division: (t.assignee?.division || 'rnd') as Task['division'],
+    assigneeId: t.assignee?.id || '',
+    coAssignees: t.co_assignees?.map(u => u.id) || [],
+    creatorId: t.created_by?.id || '',
     status: t.status as Task['status'],
-    priority: t.priority as Task['priority'],
-    deadline: t.deadline,
-    projectId: t.project?.id,
-    project: t.project ? {
-      id: t.project.id,
-      code: t.project.code,
-      title: t.project.title,
-    } : undefined,
-    createdBy: t.created_by ? {
-      id: t.created_by.id,
-      name: t.created_by.name,
-      email: t.created_by.email,
-      role: 'employee' as const,
-      division: 'management' as const,
-      avatar: t.created_by.avatar,
-    } : currentUser,
-    assignee: t.assignee ? {
-      id: t.assignee.id,
-      name: t.assignee.name,
-      email: t.assignee.email,
-      role: 'employee' as const,
-      division: 'management' as const,
-      avatar: t.assignee.avatar,
-    } : undefined,
-    coAssignees: t.co_assignees?.map(u => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: 'employee' as const,
-      division: 'management' as const,
-      avatar: u.avatar,
-    })) || [],
-    result: t.result,
+    priority: (t.priority || 'medium') as Task['priority'],
+    deadline: new Date(t.deadline),
+    approvalRoute: 'division_then_management' as Task['approvalRoute'],
+    createdAt: new Date(t.created_at),
+    updatedAt: new Date(t.updated_at),
     attachments: t.attachments?.map(a => ({
       id: a.id,
       fileName: a.file_name,
       fileUrl: a.file_url,
       fileSize: a.file_size,
-      uploadedAt: a.uploaded_at,
+      uploadedAt: new Date(a.uploaded_at),
     })) || [],
-    commentsCount: t.comments_count || 0,
-    createdAt: t.created_at,
-    updatedAt: t.updated_at,
+    comments: [],
+    history: [],
+    category: 'standard' as Task['category'],
   }));
+
+  // Статистика Dashboard из задач (без демо-данных)
+  const dashboardStats = {
+    overdue: localTasks.filter(isTaskOverdue).length,
+    onTime: localTasks.filter(t => t.status === 'accepted').length,
+    inProgress: localTasks.filter(t => t.status === 'in_progress').length,
+    underReview: localTasks.filter(t => t.status === 'under_review').length,
+    byEmployee: Object.values(
+      localTasks.reduce<Record<string, { employeeId: string; total: number; overdue: number; completed: number }>>((acc, t) => {
+        const key = t.assigneeId || 'unknown';
+        if (!acc[key]) acc[key] = { employeeId: key, total: 0, overdue: 0, completed: 0 };
+        acc[key].total += 1;
+        if (isTaskOverdue(t)) acc[key].overdue += 1;
+        if (t.status === 'accepted') acc[key].completed += 1;
+        return acc;
+      }, {})
+    ),
+  };
   
   // Конвертируем researches из API формата в локальный формат
   const localResearches: Research[] = researches.map(r => ({
@@ -221,6 +215,10 @@ function AppContent() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedResearchId, setSelectedResearchId] = useState<string | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  
+  // Состояние диалогов создания
+  const [isCreateProjectDialogOpen, setIsCreateProjectDialogOpen] = useState(false);
+  const [isCreatePackageDialogOpen, setIsCreatePackageDialogOpen] = useState(false);
 
   /**
    * Навигация между страницами
@@ -307,11 +305,23 @@ function AppContent() {
   };
 
   /**
+   * Открыть диалог создания проекта
+   */
+  const handleCreateProject = () => {
+    setIsCreateProjectDialogOpen(true);
+  };
+
+  /**
    * Создание нового проекта через API
    */
-  const handleCreateProject = async () => {
-    // TODO: Открыть модальное окно создания проекта
-    alert('Функционал создания проекта. В полной версии здесь будет форма создания проекта.');
+  const handleSubmitCreateProject = async (data: any) => {
+    try {
+      await projectsApi.create(data);
+      await refetchProjects();
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      throw error;
+    }
   };
 
   /**
@@ -340,6 +350,26 @@ function AppContent() {
     alert(`Создание проекта на основе исследования ${researchId}. В полной версии здесь будет форма создания проекта с предзаполненными данными из исследования.`);
     setSelectedResearchId(null);
     setCurrentPage('projects-and-research');
+  };
+
+  /**
+   * Открыть диалог создания внешнего пакета
+   */
+  const handleCreatePackage = () => {
+    setIsCreatePackageDialogOpen(true);
+  };
+
+  /**
+   * Создание нового внешнего пакета
+   */
+  const handleSubmitCreatePackage = async (data: any) => {
+    try {
+      await createPackage(data);
+      await refetchPackages();
+    } catch (error) {
+      console.error('Failed to create external package:', error);
+      throw error;
+    }
   };
 
   /**
@@ -390,7 +420,7 @@ function AppContent() {
   const selectedTask = selectedTaskId ? localTasks.find(t => t.id === selectedTaskId) : null;
   const selectedProject = selectedProjectId ? localProjects.find(p => p.id === selectedProjectId) : null;
   const selectedResearch = selectedResearchId ? localResearches.find(r => r.id === selectedResearchId) : null;
-  const selectedPackage = selectedPackageId ? externalPackages.find(p => p.id === selectedPackageId) : null;
+  const selectedPackage = selectedPackageId ? packages.find(p => p.id === selectedPackageId) : null;
 
   // Общее состояние загрузки
   const isDataLoading = projectsLoading || tasksLoading || researchesLoading;
@@ -436,35 +466,11 @@ function AppContent() {
       case 'external-packages':
         return (
           <ExternalPackages
-            packages={externalPackages}
+            packages={packages}
             currentUser={currentUser}
             onSelectPackage={setSelectedPackageId}
             onNavigateBack={handleNavigateBack}
-            onCreate={() => alert('Создание внешнего пакета. В полной версии здесь будет форма.')}
-          />
-        );
-
-      case 'demo':
-        return (
-          <ComponentsDemo
-            currentUser={currentUser}
-            onNavigateBack={handleNavigateBack}
-          />
-        );
-
-      case 'p1-demo':
-        return (
-          <P1ComponentsDemo
-            currentUser={currentUser}
-            onNavigateBack={handleNavigateBack}
-          />
-        );
-
-      case 'integration':
-        return (
-          <IntegrationDemo
-            currentUser={currentUser}
-            onNavigateBack={handleNavigateBack}
+            onCreate={handleCreatePackage}
           />
         );
 
@@ -559,10 +565,20 @@ function AppContent() {
         />
       )}
 
-      {/* Переключатель роли (только для демо) */}
-      <RoleSwitcher
+      {/* Диалог создания проекта */}
+      <CreateProjectDialog
+        open={isCreateProjectDialogOpen}
+        onOpenChange={setIsCreateProjectDialogOpen}
         currentUser={currentUser}
-        onUserChange={setCurrentUser}
+        onSubmit={handleSubmitCreateProject}
+      />
+
+      {/* Диалог создания внешнего пакета */}
+      <CreateExternalPackageDialog
+        open={isCreatePackageDialogOpen}
+        onOpenChange={setIsCreatePackageDialogOpen}
+        currentUser={currentUser}
+        onSubmit={handleSubmitCreatePackage}
       />
     </div>
   );

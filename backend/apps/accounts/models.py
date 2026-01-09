@@ -219,3 +219,58 @@ class User(AbstractBaseUser, PermissionsMixin):
     def division_display(self) -> str:
         """Человекочитаемое название отдела."""
         return self.get_division_display()
+    
+    def get_all_divisions(self):
+        """Возвращает все отделы пользователя (основной + дополнительные)."""
+        divisions = [self.division]
+        # Добавляем дополнительные отделы из UserDivision
+        additional = self.additional_divisions.values_list('division', flat=True)
+        divisions.extend(additional)
+        return list(set(divisions))  # Уникальные значения
+    
+    def is_in_division(self, division):
+        """Проверяет, работает ли пользователь в указанном отделе."""
+        return division in self.get_all_divisions()
+
+
+class UserDivision(models.Model):
+    """
+    Дополнительные отделы для пользователя.
+    
+    Используется для сотрудников, работающих в нескольких отделах.
+    Например: Муталов Фахриддин работает в R&D и IT-проектах.
+    """
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='additional_divisions',
+        verbose_name='Пользователь'
+    )
+    
+    division = models.CharField(
+        max_length=50,
+        choices=Division.choices,
+        verbose_name='Дополнительный отдел'
+    )
+    
+    # Кто может ставить задачи из этого отдела
+    can_assign_tasks = models.BooleanField(
+        default=True,
+        verbose_name='Может получать задачи'
+    )
+    
+    class Meta:
+        db_table = 'user_divisions'
+        verbose_name = 'Дополнительный отдел пользователя'
+        verbose_name_plural = 'Дополнительные отделы пользователей'
+        unique_together = [['user', 'division']]
+    
+    def __str__(self):
+        return f"{self.user.name} - {self.get_division_display()}"
