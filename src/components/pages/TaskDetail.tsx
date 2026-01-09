@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Upload, Send, RotateCcw } from 'lucide-react';
-import { Button } from '../ui/button'; // Changed to use shadcn button
+import { Button } from '../ui/Button'; // Changed to use shadcn button
 import { StatusBadge } from '../ui/StatusBadge';
 import { DeadlineBadge } from '../ui/DeadlineBadge';
 import { UserAvatar } from '../ui/UserAvatar';
