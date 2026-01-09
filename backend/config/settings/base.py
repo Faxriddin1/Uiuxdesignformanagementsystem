@@ -246,12 +246,17 @@ REST_FRAMEWORK = {
     
     # Throttling (Rate Limiting)
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+        'apps.core.throttling.AnonRateThrottle',
+        'apps.core.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': env('RATE_LIMIT_ANON', default='100/minute'),
         'user': env('RATE_LIMIT_USER', default='1000/minute'),
+        'login': '5/minute',
+        'password_reset': '3/hour',
+        'burst': '60/second',
+        'sustained': '10000/day',
+        'file_upload': '20/hour',
     },
     
     # Рендереры

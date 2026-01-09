@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopHeader } from './components/layout/TopHeader';
 import { Dashboard } from './components/pages/Dashboard';
@@ -567,11 +568,18 @@ function AppContent() {
   );
 }
 
-// Оборачиваем AppContent в AuthProvider
+// Оборачиваем AppContent в AuthProvider и ErrorBoundary
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // В production здесь можно отправлять в Sentry
+        console.error('App Error:', error, errorInfo);
+      }}
+    >
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

@@ -81,13 +81,44 @@ DATABASES['default']['CONN_MAX_AGE'] = 60  # noqa: F405
 # Cache (Production - Redis)
 # =============================================================================
 
-# Раскомментируйте когда Redis будет настроен
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': env('REDIS_URL', default='redis://redis:6379/0'),
-#     }
-# }
+REDIS_URL = env('REDIS_URL', default='redis://redis:6379/0')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'mgmt',
+        'TIMEOUT': 300,
+    },
+    'sessions': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_URL.replace('/0', '/1'),
+        'KEY_PREFIX': 'session',
+        'TIMEOUT': 86400,
+    },
+}
+
+# Сессии в Redis
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'sessions'
+
+# =============================================================================
+# Celery Configuration
+# =============================================================================
+
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://redis:6379/3')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://redis:6379/4')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_ENABLE_UTC = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 600
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # =============================================================================
 # Email (Production)

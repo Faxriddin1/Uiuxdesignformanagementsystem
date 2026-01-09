@@ -1,0 +1,98 @@
+# =============================================================================
+# Pre-commit hooks configuration
+# =============================================================================
+# Установка:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Ручной запуск: pre-commit run --all-files
+# =============================================================================
+
+repos:
+  # ---------------------------------------------------------------------------
+  # Общие проверки
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Удаление trailing whitespace
+      - id: end-of-file-fixer
+        name: Добавление newline в конец файла
+      - id: check-yaml
+        name: Проверка YAML синтаксиса
+      - id: check-json
+        name: Проверка JSON синтаксиса
+      - id: check-added-large-files
+        name: Проверка больших файлов
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+        name: Проверка маркеров merge conflict
+      - id: detect-private-key
+        name: Проверка приватных ключей
+
+  # ---------------------------------------------------------------------------
+  # Python formatting (backend)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/psf/black
+    rev: 24.2.0
+    hooks:
+      - id: black
+        name: Black форматирование
+        files: ^backend/
+        language_version: python3.11
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort сортировка импортов
+        files: ^backend/
+
+  # ---------------------------------------------------------------------------
+  # Python linting
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        name: Flake8 линтинг
+        files: ^backend/
+        args: ['--config=backend/setup.cfg']
+
+  # ---------------------------------------------------------------------------
+  # TypeScript/JavaScript (frontend)
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier форматирование
+        entry: npx prettier --write
+        language: system
+        files: \.(ts|tsx|js|jsx|css|json)$
+        exclude: ^(node_modules|dist|build)/
+
+      - id: eslint
+        name: ESLint проверка
+        entry: npx eslint --fix
+        language: system
+        files: \.(ts|tsx|js|jsx)$
+        exclude: ^(node_modules|dist|build)/
+
+  # ---------------------------------------------------------------------------
+  # Secrets detection
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Проверка секретов
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package-lock.json
+
+# Дополнительные настройки
+default_language_version:
+  python: python3.11
+
+# Стадии выполнения
+default_stages: [commit]

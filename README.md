@@ -11,9 +11,46 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://docker.com/)
 [![License](https://img.shields.io/badge/License-Proprietary-red)](#лицензия)
 
-[Демо](#быстрый-старт) · [Документация API](#api-контракты) · [Contributing](#contributing)
+[Быстрый старт](#-быстрый-старт-5-минут) · [Документация](#-документация) · [API](#api-контракты)
 
 </div>
+
+---
+
+## 🚀 Быстрый старт (5 минут)
+
+```bash
+# 1. Клонировать репозиторий
+git clone https://github.com/Faxriddin1/Uiuxdesignformanagementsystem.git
+cd Uiuxdesignformanagementsystem
+
+# 2. Настроить и запустить (одна команда!)
+make setup
+
+# 3. Открыть приложение
+# Backend API:  http://localhost:8000/api/docs/
+# Frontend:     http://localhost:5173
+```
+
+### Демо-доступы
+
+| Роль | Email | Пароль |
+|------|-------|--------|
+| Admin | admin@example.com | admin123 |
+| Manager | manager@example.com | user123 |
+| Designer | designer@example.com | user123 |
+
+---
+
+## 📚 Документация
+
+| Документ | Описание |
+|----------|----------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архитектура системы, слои, диаграммы |
+| [DECISIONS.md](docs/DECISIONS.md) | Архитектурные решения (ADR) |
+| [CONTRIBUTING.md](docs/CONTRIBUTING.md) | Гайд для разработчиков |
+| [HOW_TO_EXTEND.md](docs/HOW_TO_EXTEND.md) | Как добавлять новый функционал |
+| [ACCEPTANCE_CHECKLIST.md](docs/ACCEPTANCE_CHECKLIST.md) | Чеклист готовности проекта |
 
 ---
 
