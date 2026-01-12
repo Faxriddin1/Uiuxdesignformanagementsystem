@@ -53,11 +53,10 @@ export function KanbanBoard({ columns, onTaskClick, getUserById }: KanbanBoardPr
               return (
                 <Card
                   key={task.id}
-                  hover
+
                   onClick={() => onTaskClick(task.id)}
-                  className={`bg-white hover:shadow-lg transition-all duration-200 border-gray-200 ${
-                    overdue ? 'ring-2 ring-red-400' : ''
-                  }`}
+                  className={`bg-white hover:shadow-lg transition-all duration-200 border-gray-200 ${overdue ? 'ring-2 ring-red-400' : ''
+                    }`}
                 >
                   <CardBody className="p-4">
                     {/* Заголовок задачи */}
@@ -75,17 +74,16 @@ export function KanbanBoard({ columns, onTaskClick, getUserById }: KanbanBoardPr
                     {/* Метаданные */}
                     <div className="flex flex-wrap items-center gap-2 mb-3">
                       <DeadlineBadge deadline={task.deadline} status={task.status} compact />
-                      
+
                       {task.priority && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                          task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                            task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                              task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-gray-100 text-gray-700'
+                          }`}>
                           {task.priority === 'urgent' ? 'Срочно' :
-                           task.priority === 'high' ? 'Высокий' :
-                           task.priority === 'medium' ? 'Средний' : 'Низкий'}
+                            task.priority === 'high' ? 'Высокий' :
+                              task.priority === 'medium' ? 'Средний' : 'Низкий'}
                         </span>
                       )}
                     </div>
@@ -106,14 +104,32 @@ export function KanbanBoard({ columns, onTaskClick, getUserById }: KanbanBoardPr
                         )}
                       </div>
 
-                      {/* Аватар исполнителя */}
-                      {assignee && (
-                        <UserAvatar
-                          name={assignee.name}
-                          avatar={assignee.avatar}
-                          size="sm"
-                        />
-                      )}
+                      {/* Аватары участников */}
+                      <div className="flex items-center gap-1">
+                        {/* Создатель (если отличается от исполнителя) */}
+                        {task.creatorId && task.creatorId !== task.assigneeId && (
+                          <div title={`Создатель: ${getUserById(task.creatorId)?.name || 'Неизвестно'}`}>
+                            <UserAvatar
+                              name={getUserById(task.creatorId)?.name || '?'}
+                              avatar={getUserById(task.creatorId)?.avatar}
+                              size="xs"
+                              className="opacity-75 ring-1 ring-gray-200"
+                            />
+                          </div>
+                        )}
+
+                        {/* Исполнитель */}
+                        {assignee && (
+                          <div title={`Исполнитель: ${assignee.name}`}>
+                            <UserAvatar
+                              name={assignee.name}
+                              avatar={assignee.avatar}
+                              size="sm"
+                              className="ring-2 ring-white"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardBody>
                 </Card>

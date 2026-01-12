@@ -215,7 +215,7 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / env('MEDIA_ROOT', default='media')
 
 # Максимальный размер загружаемого файла
-MAX_UPLOAD_SIZE_MB = env.int('MAX_UPLOAD_SIZE_MB', default=50)
+MAX_UPLOAD_SIZE_MB = env.int('MAX_UPLOAD_SIZE_MB', default=1024)
 DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 

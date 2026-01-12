@@ -84,6 +84,11 @@ class ApiClient {
       ...headers as Record<string, string>,
     };
 
+    // Если отправляем FormData, удаляем Content-Type, чтобы браузер сам выставил boundary
+    if (restOptions.body instanceof FormData) {
+      delete requestHeaders['Content-Type'];
+    }
+
     if (!skipAuth && this.accessToken) {
       requestHeaders['Authorization'] = `Bearer ${this.accessToken}`;
     }

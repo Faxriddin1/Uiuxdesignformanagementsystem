@@ -11,7 +11,8 @@ import { DeadlineBadge } from '../ui/DeadlineBadge';
 import { UserAvatar } from '../ui/UserAvatar';
 import { AttachmentsList } from '../ui/AttachmentsList';
 import { MentionInput } from '../MentionInput';
-import { 
+import { RejectModal } from '../RejectModal';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -21,9 +22,9 @@ import {
 } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
 import { Task, User, Comment } from '../../types';
-import { 
-  getTaskStatusLabel, 
-  getTaskStatusColor, 
+import {
+  getTaskStatusLabel,
+  getTaskStatusColor,
   getDivisionLabel,
   formatDateTime,
   canUserApprove
@@ -35,7 +36,7 @@ import { useUsers } from '../../hooks/useUsers';
  */
 const getTaskCategoryLabel = (category?: string) => {
   if (!category || category === 'standard') return null;
-  
+
   switch (category) {
     case 'external_org':
       return '🏢 Вопрос на сторонней организации';
@@ -60,9 +61,13 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
   const [resultDescription, setResultDescription] = useState(task.resultDescription || '');
   const [comment, setComment] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const assignee = users.find(u => u.id === task.assigneeId);
-  const creator = users.find(u => u.id === task.creatorId);
+  // Use task.creator if available (populated from API), otherwise try to find in loaded users
+  const creator = (task.creator as User) || users.find(u => u.id === task.creatorId);
   const isAssignee = currentUser.id === task.assigneeId;
   const canApprove = canUserApprove(currentUser);
 
@@ -77,80 +82,154 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
     }
   };
 
-  const handleSubmitForReview = () => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const { tasksApi } = await import('../../api/tasks');
+      await tasksApi.uploadAttachment(task.id, file);
+
+      // Refresh task data to show new attachment
+      const updatedTask = await tasksApi.get(task.id);
+
+      // Map API attachments to local Attachment type
+      const mappedAttachments = updatedTask.attachments.map(att => ({
+        id: att.id,
+        name: att.name,
+        type: att.file_type,
+        size: att.file_size,
+        url: att.download_url || att.file,
+        uploadedBy: att.uploaded_by?.name || 'Unknown',
+        uploadedAt: new Date(att.created_at)
+      }));
+
+      onUpdateTask(task.id, { attachments: mappedAttachments });
+      onUpdateTask(task.id, { attachments: mappedAttachments });
+    } catch (error: any) {
+      console.error('Ошибка при загрузке файла:', error);
+      alert(`Не удалось загрузить файл: ${error.message || 'Неизвестная ошибка'}`);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const onAddFilesClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleSubmitForReview = async () => {
     if (task.attachments.length === 0) {
       alert('Необходимо приложить файлы для подтверждения выполнения');
       return;
     }
 
-    if (!resultDescription.trim()) {
-      alert('Необходимо описать результат выполнения');
+    if (!resultDescription.trim() || resultDescription.length < 10) {
+      alert('Описание результата должно быть не менее 10 символов');
       return;
     }
 
-    onUpdateTask(task.id, {
-      status: 'under_review',
-      resultDescription,
-      history: [
-        ...task.history,
-        {
-          id: `h${Date.now()}`,
-          userId: currentUser.id,
-          action: 'Отправлено на рассмотрение',
-          details: 'Добавлены результаты работы',
-          timestamp: new Date(),
-        },
-      ],
-    });
+    try {
+      const { tasksApi } = await import('../../api/tasks');
+      const updatedTask = await tasksApi.submitForReview(task.id, resultDescription);
+
+      // Обновляем родительский компонент полным объектом задачи
+      onUpdateTask(task.id, {
+        status: updatedTask.status as Task['status'],
+        resultDescription: resultDescription,
+        history: [
+          ...task.history,
+          {
+            id: `h${Date.now()}`,
+            userId: currentUser.id,
+            action: 'Отправлено на проверку',
+            details: resultDescription,
+            timestamp: new Date(),
+          }
+        ],
+      });
+
+      onClose(); // Закрываем модальное окно после успешной отправки
+      alert('Задача успешно отправлена на проверку');
+    } catch (error: any) {
+      console.error('Ошибка при отправке на проверку:', error);
+      alert(`Не удалось отправить задачу: ${error.message || 'Неизвестная ошибка'}`);
+    }
   };
 
-  const handleApprove = () => {
-    onUpdateTask(task.id, {
-      status: 'accepted',
-      history: [
-        ...task.history,
-        {
-          id: `h${Date.now()}`,
-          userId: currentUser.id,
-          action: 'Одобрено',
-          details: 'Задача принята и закрыта',
-          timestamp: new Date(),
-        },
-      ],
-    });
+  const isUnderReview = task.status === 'under_division_review' || task.status === 'under_management_review';
+
+  const handleApprove = async () => {
+    try {
+      const { tasksApi } = await import('../../api/tasks');
+      const updatedTask = await tasksApi.approve(task.id, comment);
+
+      onUpdateTask(task.id, {
+        status: updatedTask.status as Task['status'],
+        history: [
+          ...task.history,
+          {
+            id: `h${Date.now()}`,
+            userId: currentUser.id,
+            action: 'Одобрено',
+            details: 'Задача принята и закрыта',
+            timestamp: new Date(),
+          },
+        ],
+      });
+      onClose();
+      alert('Задача успешно одобрена');
+    } catch (error: any) {
+      console.error('Ошибка при одобрении:', error);
+      alert(`Не удалось одобрить задачу: ${error.message || 'Неизвестная ошибка'}`);
+    }
   };
 
   const handleReject = () => {
-    if (!comment.trim()) {
-      alert('Необходимо указать причину возврата на доработку');
-      return;
-    }
-
-    const newComment: Comment = {
-      id: `c${Date.now()}`,
-      authorId: currentUser.id,
-      text: comment,
-      createdAt: new Date(),
-      isReturnReason: true,
-    };
-
-    onUpdateTask(task.id, {
-      status: 'rework',
-      comments: [...task.comments, newComment],
-      history: [
-        ...task.history,
-        {
-          id: `h${Date.now()}`,
-          userId: currentUser.id,
-          action: 'Возврат на доработку',
-          details: comment,
-          timestamp: new Date(),
-        },
-      ],
-    });
-
-    setComment('');
+    setIsRejectModalOpen(true);
   };
+
+  const handleConfirmReject = async (reason: string) => {
+    try {
+      const { tasksApi } = await import('../../api/tasks');
+      const updatedTask = await tasksApi.reject(task.id, reason);
+
+      // Создаем объект комментария для локального обновления
+      const newComment: Comment = {
+        id: `c${Date.now()}`,
+        authorId: currentUser.id,
+        text: reason,
+        createdAt: new Date(),
+        isReturnReason: true,
+      };
+
+      onUpdateTask(task.id, {
+        status: updatedTask.status as Task['status'],
+        comments: [...task.comments, newComment],
+        history: [
+          ...task.history,
+          {
+            id: `h${Date.now()}`,
+            userId: currentUser.id,
+            action: 'Возврат на доработку',
+            details: reason,
+            timestamp: new Date(),
+          },
+        ],
+      });
+
+      setIsRejectModalOpen(false);
+      alert('Задача возвращена на доработку');
+    } catch (error: any) {
+      console.error('Ошибка при возврате:', error);
+      alert(`Не удалось вернуть задачу: ${error.message || 'Неизвестная ошибка'}`);
+    }
+  };
+
 
   const handleAddComment = () => {
     if (!comment.trim()) return;
@@ -174,17 +253,20 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
   };
 
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={true}
+      onOpenChange={(open: boolean) => !open && onClose()}
+    >
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden w-[95vw]">
         <DialogHeader className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between mr-8">
-             <div className="flex items-center gap-3">
-               <DialogTitle className="text-xl font-semibold">{task.title}</DialogTitle>
-               <StatusBadge
-                 label={getTaskStatusLabel(task.status)}
-                 color={getTaskStatusColor(task.status)}
-               />
-             </div>
+            <div className="flex items-center gap-3">
+              <DialogTitle className="text-xl font-semibold">{task.title}</DialogTitle>
+              <StatusBadge
+                label={getTaskStatusLabel(task.status)}
+                color={getTaskStatusColor(task.status)}
+              />
+            </div>
           </div>
           <DialogDescription className="flex items-center gap-4 text-sm text-gray-600 mt-2">
             <span>ID: {task.id}</span>
@@ -244,7 +326,7 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
             </div>
 
             {/* Результат */}
-            {(task.status === 'under_review' || task.status === 'rework' || task.status === 'accepted') && (
+            {(isUnderReview || task.status === 'rework' || task.status === 'accepted') && (
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">Результат выполнения</h3>
                 <div className="text-gray-700 bg-blue-50 p-4 rounded-lg border border-blue-100">
@@ -271,13 +353,28 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-gray-900">Вложения</h3>
                 {isAssignee && (task.status === 'in_progress' || task.status === 'rework') && (
-                  <Button size="sm" variant="secondary" className="gap-2">
-                    <Upload size={16} />
-                    Добавить файлы
-                  </Button>
+                  <>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                    />
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="gap-2"
+                      onClick={onAddFilesClick}
+                      disabled={isUploading}
+                    >
+                      <Upload size={16} />
+                      {isUploading ? 'Загрузка...' : 'Добавить файлы'}
+                    </Button>
+                  </>
                 )}
               </div>
-              
+
               {task.attachments.length === 0 ? (
                 <div className="text-gray-500 text-sm italic p-4 border border-dashed border-gray-200 rounded-lg text-center">
                   {isAssignee && (task.status === 'in_progress' || task.status === 'rework')
@@ -295,7 +392,7 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
             {/* Комментарии */}
             <div>
               <h3 className="font-medium text-gray-900 mb-3">Комментарии</h3>
-              
+
               <div className="space-y-4 mb-4">
                 {task.comments.length === 0 ? (
                   <p className="text-gray-500 text-sm">Нет комментариев</p>
@@ -305,9 +402,8 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
                     return (
                       <div
                         key={comm.id}
-                        className={`p-4 rounded-lg ${
-                          comm.isReturnReason ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'
-                        }`}
+                        className={`p-4 rounded-lg ${comm.isReturnReason ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           {author && (
@@ -403,13 +499,12 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
             )}
 
             {/* Действия для руководителя */}
-            {canApprove && task.status === 'under_review' && (
+            {canApprove && isUnderReview && (
               <>
                 <Button
                   variant="destructive"
                   onClick={handleReject}
                   className="gap-2"
-                  disabled={!comment.trim()}
                 >
                   <RotateCcw size={16} />
                   Вернуть
@@ -422,6 +517,13 @@ export function TaskDetail({ task, currentUser, onClose, onUpdateTask }: TaskDet
           </div>
         </DialogFooter>
       </DialogContent>
+
+      <RejectModal
+        isOpen={isRejectModalOpen}
+        onClose={() => setIsRejectModalOpen(false)}
+        onConfirm={handleConfirmReject}
+        taskTitle={task.title}
+      />
     </Dialog>
   );
 }

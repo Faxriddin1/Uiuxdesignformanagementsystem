@@ -49,6 +49,9 @@ class TaskAttachmentUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskAttachment
         fields = ['file', 'name']
+        extra_kwargs = {
+            'name': {'required': False}
+        }
     
     def create(self, validated_data):
         file = validated_data['file']
@@ -148,6 +151,7 @@ class TaskListSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     task_type_display = serializers.CharField(source='get_task_type_display', read_only=True)
+    attachments = TaskAttachmentSerializer(many=True, read_only=True)
     
     class Meta:
         model = Task
@@ -168,6 +172,7 @@ class TaskListSerializer(serializers.ModelSerializer):
             'days_until_deadline',
             'created_at',
             'updated_at',
+            'attachments',
         ]
         read_only_fields = fields
 

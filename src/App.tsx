@@ -32,14 +32,14 @@ type Page = 'dashboard' | 'tasks' | 'projects-and-research' | 'external-packages
 // Основной компонент приложения
 function AppContent() {
   const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth();
-  
+
   // API хуки для загрузки данных
   const { projects, isLoading: projectsLoading, refetch: refetchProjects, updateProject: apiUpdateProject } = useProjects();
   const { tasks, isLoading: tasksLoading, refetch: refetchTasks, updateTask: apiUpdateTask } = useTasks();
   const { researches, isLoading: researchesLoading, refetch: refetchResearches, updateResearch: apiUpdateResearch } = useResearches();
   const { packages, isLoading: packagesLoading, refetch: refetchPackages, createPackage } = useExternalPackages();
   const { notifications: apiNotifications, markAsRead: apiMarkAsRead, markAllAsRead: apiMarkAllAsRead } = useNotifications();
-  
+
   // Состояние текущего пользователя
   const [currentUser, setCurrentUser] = useState<User>({
     id: '',
@@ -48,7 +48,7 @@ function AppContent() {
     role: 'employee',
     division: 'rnd',
   });
-  
+
   // Обновляем currentUser когда authUser загружается
   useEffect(() => {
     if (authUser) {
@@ -62,12 +62,12 @@ function AppContent() {
       });
     }
   }, [authUser]);
-  
+
   // Состояние текущей страницы
   const [currentPage, setCurrentPage] = useState<Page>('projects-and-research');
-  
+
   // Внешние пакеты загружаются из API через useExternalPackages
-  
+
   // Конвертируем уведомления из API формата в локальный формат
   const notifications: Notification[] = apiNotifications.map(n => ({
     id: n.id,
@@ -76,9 +76,9 @@ function AppContent() {
     title: n.title,
     message: n.message,
     isRead: n.is_read,
-    createdAt: n.created_at,
+    createdAt: new Date(n.created_at),
   }));
-  
+
   // Конвертируем projects из API формата в локальный формат
   const localProjects: Project[] = projects.map(p => ({
     id: p.id,
@@ -86,7 +86,7 @@ function AppContent() {
     title: p.title,
     description: p.description,
     status: p.status as Project['status'],
-    priority: p.priority as Project['priority'],
+    // priority removed
     progress: p.progress,
     deadline: p.deadline,
     createdBy: p.created_by ? {
@@ -115,20 +115,34 @@ function AppContent() {
     })) || [],
     tasksCount: p.tasks_count || 0,
     completedTasksCount: p.completed_tasks_count || 0,
-    createdAt: p.created_at,
-    updatedAt: p.updated_at,
+    createdAt: new Date(p.created_at),
+    updatedAt: new Date(p.updated_at),
+    division: 'rnd', // Default fallback
+    responsibleId: p.assignee?.id || '',
+    creatorId: p.created_by?.id || '',
+    attachments: [],
+    history: [],
+    risks: [],
   }));
-  
+
   // Конвертируем tasks из API формата в локальный формат
   const localTasks: Task[] = tasks.map(t => ({
     id: t.id,
     title: t.title,
     description: t.description || '',
     taskType: (t.task_type === 'T1' ? 'T1' : 'T2') as Task['taskType'],
-    division: (t.assignee?.division || 'rnd') as Task['division'],
+    division: 'rnd' as Task['division'],
     assigneeId: t.assignee?.id || '',
     coAssignees: t.co_assignees?.map(u => u.id) || [],
     creatorId: t.created_by?.id || '',
+    creator: t.created_by ? {
+      id: t.created_by.id,
+      name: t.created_by.name,
+      email: t.created_by.email,
+      avatar: t.created_by.avatar,
+      role: 'employee', // Default fallback
+      division: 'rnd'   // Default fallback
+    } : undefined,
     status: t.status as Task['status'],
     priority: (t.priority || 'medium') as Task['priority'],
     deadline: new Date(t.deadline),
@@ -137,10 +151,12 @@ function AppContent() {
     updatedAt: new Date(t.updated_at),
     attachments: t.attachments?.map(a => ({
       id: a.id,
-      fileName: a.file_name,
-      fileUrl: a.file_url,
-      fileSize: a.file_size,
-      uploadedAt: new Date(a.uploaded_at),
+      name: a.name,
+      type: a.file_type || 'unknown',
+      url: a.download_url || a.file,
+      size: a.file_size,
+      uploadedBy: a.uploaded_by?.name || 'Unknown',
+      uploadedAt: new Date(a.created_at),
     })) || [],
     comments: [],
     history: [],
@@ -152,7 +168,7 @@ function AppContent() {
     overdue: localTasks.filter(isTaskOverdue).length,
     onTime: localTasks.filter(t => t.status === 'accepted').length,
     inProgress: localTasks.filter(t => t.status === 'in_progress').length,
-    underReview: localTasks.filter(t => t.status === 'under_review').length,
+    underReview: localTasks.filter(t => t.status === 'under_division_review' || t.status === 'under_management_review').length,
     byEmployee: Object.values(
       localTasks.reduce<Record<string, { employeeId: string; total: number; overdue: number; completed: number }>>((acc, t) => {
         const key = t.assigneeId || 'unknown';
@@ -164,16 +180,16 @@ function AppContent() {
       }, {})
     ),
   };
-  
+
   // Конвертируем researches из API формата в локальный формат
   const localResearches: Research[] = researches.map(r => ({
     id: r.id,
     code: r.code,
     title: r.title,
-    description: r.description,
+    // description removed (mapped to summary below)
     status: r.status as Research['status'],
-    priority: r.priority as Research['priority'],
-    deadline: r.deadline,
+    // priority removed (not in Research type)
+    deadline: new Date(r.deadline),
     createdBy: r.created_by ? {
       id: r.created_by.id,
       name: r.created_by.name,
@@ -201,21 +217,32 @@ function AppContent() {
     result: r.result,
     attachments: r.attachments?.map(a => ({
       id: a.id,
-      fileName: a.file_name,
-      fileUrl: a.file_url,
-      fileSize: a.file_size,
-      uploadedAt: a.uploaded_at,
+      name: a.file_name,
+      type: 'unknown',
+      url: a.file_url,
+      size: a.file_size,
+      uploadedBy: 'Unknown',
+      uploadedAt: new Date(a.uploaded_at),
     })) || [],
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
+    createdAt: new Date(r.created_at),
+    updatedAt: new Date(r.updated_at),
+    summary: r.description || '', // Map API description to local summary
+    sources: [],
+    recommendations: r.result || '', // Map API result to local recommendations
+    division: 'rnd',
+    authorId: r.assignee?.id || '',
+    creatorId: r.created_by?.id || '',
+    comments: [],
+    history: [],
+    access: { accessLevel: 'read_only', grantedAt: new Date(), grantedBy: '' },
   }));
-  
+
   // Состояние открытых карточек
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedResearchId, setSelectedResearchId] = useState<string | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
-  
+
   // Состояние диалогов создания
   const [isCreateProjectDialogOpen, setIsCreateProjectDialogOpen] = useState(false);
   const [isCreatePackageDialogOpen, setIsCreatePackageDialogOpen] = useState(false);
@@ -252,7 +279,7 @@ function AppContent() {
         description: updates.description,
         status: updates.status,
         priority: updates.priority,
-        result: updates.result,
+        result: updates.resultDescription,
       });
       await refetchTasks();
     } catch (error) {
@@ -269,8 +296,8 @@ function AppContent() {
         title: updates.title,
         description: updates.description,
         status: updates.status,
-        priority: updates.priority,
-        progress: updates.progress,
+        // priority not in UpdateProjectDto
+        // progress not in UpdateProjectDto
       });
       await refetchProjects();
     } catch (error) {
@@ -285,10 +312,10 @@ function AppContent() {
     try {
       await researchApi.update(researchId, {
         title: updates.title,
-        description: updates.description,
+        description: updates.summary,
         status: updates.status,
-        priority: updates.priority,
-        result: updates.result,
+        // priority not in Research
+        result: updates.recommendations,
       });
       await refetchResearches();
     } catch (error) {
@@ -332,9 +359,9 @@ function AppContent() {
       try {
         await researchApi.create({
           title: newResearch.title,
-          description: newResearch.description,
-          priority: newResearch.priority,
-          deadline: newResearch.deadline,
+          description: newResearch.summary,
+          // priority removed
+          deadline: newResearch.deadline.toISOString(),
         });
         await refetchResearches();
       } catch (error) {
@@ -493,7 +520,7 @@ function AppContent() {
 
   // Показываем страницу логина, если не авторизован
   if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={() => {}} />;
+    return <LoginPage onLoginSuccess={() => { }} />;
   }
 
   return (
@@ -508,8 +535,8 @@ function AppContent() {
       {/* Основная область с хедером и контентом */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Верхний хедер */}
-        <TopHeader 
-          currentUser={currentUser} 
+        <TopHeader
+          currentUser={currentUser}
           notifications={notifications}
           onNotificationClick={handleNotificationClick}
           onMarkAsRead={handleMarkAsRead}

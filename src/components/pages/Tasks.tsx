@@ -30,18 +30,18 @@ type TabType = 'my' | 'all' | 'review' | 'external_org' | 'external_branch' | 'e
 
 export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
   const { users } = useUsers();
-  
+
   // Вкладки
   const [activeTab, setActiveTab] = useState<TabType>('my');
-  
+
   // Фильтры для "Реестр задач"
   const [filterDivision, setFilterDivision] = useState<Division | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<TaskStatus | 'all'>('all');
   const [filterOverdue, setFilterOverdue] = useState(false);
-  
+
   // Режим отображения
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
-  
+
   // Сохраненные представления
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [showSavedViews, setShowSavedViews] = useState(false);
@@ -64,8 +64,10 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
    * Фильтрация: задачи на рассмотрении для очереди приемки
    */
   const reviewTasks = useMemo(() => {
-    return tasks.filter(task => task.status === 'under_review')
-      .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+    return tasks.filter(task =>
+      task.status === 'under_division_review' ||
+      task.status === 'under_management_review'
+    ).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
   }, [tasks]);
 
   /**
@@ -143,7 +145,7 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
    * Группировка задач по статусам для Kanban доски
    */
   const kanbanColumns = useMemo(() => {
-    const statusGroups = {
+    const statusGroups: any = {
       new: { id: 'new', title: 'Новые', color: 'bg-gray-400', tasks: [] as Task[] },
       in_progress: { id: 'in_progress', title: 'В работе', color: 'bg-blue-400', tasks: [] as Task[] },
       under_review: { id: 'under_review', title: 'На рассмотрении', color: 'bg-yellow-400', tasks: [] as Task[] },
@@ -154,10 +156,14 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
     currentTasks.forEach(task => {
       if (statusGroups[task.status]) {
         statusGroups[task.status].tasks.push(task);
+      } else if (task.status === 'under_division_review' || task.status === 'under_management_review') {
+        statusGroups['under_review'].tasks.push(task);
+      } else if (task.status === 'rework_withdrawn') {
+        statusGroups['rework'].tasks.push(task);
       }
     });
 
-    return Object.values(statusGroups);
+    return Object.values(statusGroups).filter((g: any) => g.id);
   }, [currentTasks]);
 
   /**
@@ -204,7 +210,7 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
       <PageHeader
         title="Задачи"
         subtitle={
-          activeTab === 'my' 
+          activeTab === 'my'
             ? `${myTasks.length} ${myTasks.length === 1 ? 'задача' : myTasks.length < 5 ? 'задачи' : 'задач'}`
             : `${filteredAllTasks.length} из ${tasks.length} ${tasks.length === 1 ? 'задачи' : tasks.length < 5 ? 'задач' : 'задач'}`
         }
@@ -223,22 +229,20 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
             <div className="flex bg-white border border-gray-200 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('kanban')}
-                className={`px-3 py-1.5 rounded transition-colors ${
-                  viewMode === 'kanban'
+                className={`px-3 py-1.5 rounded transition-colors ${viewMode === 'kanban'
                     ? 'bg-blue-500 text-white'
                     : 'text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
                 title="Kanban"
               >
                 <LayoutGrid size={18} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 rounded transition-colors ${
-                  viewMode === 'list'
+                className={`px-3 py-1.5 rounded transition-colors ${viewMode === 'list'
                     ? 'bg-blue-500 text-white'
                     : 'text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
                 title="Список"
               >
                 <List size={18} />
@@ -269,7 +273,7 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
               </span>
             </div>
           </button>
-          
+
           <button
             onClick={() => setActiveTab('all')}
             className={`
@@ -288,7 +292,7 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
               </span>
             </div>
           </button>
-          
+
           <button
             onClick={() => setActiveTab('review')}
             className={`
@@ -303,11 +307,14 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
               <ClipboardList size={18} />
               <span>Очередь приемки</span>
               <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-sm">
-                {tasks.filter(task => task.status === 'under_review').length}
+                {tasks.filter(task =>
+                  task.status === 'under_division_review' ||
+                  task.status === 'under_management_review'
+                ).length}
               </span>
             </div>
           </button>
-          
+
           <button
             onClick={() => setActiveTab('external_org')}
             className={`
@@ -326,7 +333,7 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
               </span>
             </div>
           </button>
-          
+
           <button
             onClick={() => setActiveTab('external_branch')}
             className={`
@@ -345,7 +352,7 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
               </span>
             </div>
           </button>
-          
+
           <button
             onClick={() => setActiveTab('external_management')}
             className={`
@@ -397,7 +404,8 @@ export function Tasks({ tasks, currentUser, onTaskClick, onBack }: TasksProps) {
                 <option value="all">Все статусы</option>
                 <option value="new">Новые</option>
                 <option value="in_progress">В работе</option>
-                <option value="under_review">На рассмотрении</option>
+                <option value="under_division_review">На проверке</option>
+                <option value="under_management_review">На рассмотрении</option>
                 <option value="rework">На доработке</option>
                 <option value="accepted">Принято</option>
               </select>

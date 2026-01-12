@@ -14,12 +14,12 @@ import { ResearchKanbanBoard } from '../ui/ResearchKanbanBoard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { UserAvatar } from '../ui/UserAvatar';
 import { Project, Research, User, ProjectStatus, ResearchStatus, Division } from '../../types';
-import { 
-  getProjectStatusLabel, 
+import {
+  getProjectStatusLabel,
   getProjectStatusColor,
   getResearchStatusLabel,
   getResearchStatusColor,
-  getDivisionLabel 
+  getDivisionLabel
 } from '../../utils/helpers';
 import { useUsers } from '../../hooks/useUsers';
 
@@ -36,23 +36,23 @@ interface ProjectsAndResearchProps {
 
 type TabType = 'projects' | 'researches';
 
-export function ProjectsAndResearch({ 
-  projects, 
-  researches, 
-  currentUser, 
-  onProjectClick, 
+export function ProjectsAndResearch({
+  projects,
+  researches,
+  currentUser,
+  onProjectClick,
   onResearchClick,
   onCreateProject,
   onCreateResearch,
-  onBack 
+  onBack
 }: ProjectsAndResearchProps) {
   // Вкладки
   const [activeTab, setActiveTab] = useState<TabType>('projects');
-  
+
   // Фильтры для проектов
   const [projectFilterStatus, setProjectFilterStatus] = useState<ProjectStatus | 'all'>('all');
   const [projectViewMode, setProjectViewMode] = useState<'kanban' | 'list'>('kanban');
-  
+
   // Фильтры для исследований
   const [researchFilterStatus, setResearchFilterStatus] = useState<ResearchStatus | 'all'>('all');
   const [showOnlyWithAccess, setShowOnlyWithAccess] = useState(false);
@@ -98,29 +98,29 @@ export function ProjectsAndResearch({
    */
   const projectKanbanColumns = useMemo(() => {
     const statusGroups = {
-      platform_implementation: { 
-        id: 'platform_implementation', 
-        title: '1. Реализация платформы', 
-        color: 'bg-blue-400', 
-        projects: [] as Project[] 
+      platform_implementation: {
+        id: 'platform_implementation',
+        title: '1. Реализация платформы',
+        color: 'bg-blue-400',
+        projects: [] as Project[]
       },
-      internal_testing: { 
-        id: 'internal_testing', 
-        title: '2. Внутренние тестирования', 
-        color: 'bg-yellow-400', 
-        projects: [] as Project[] 
+      internal_testing: {
+        id: 'internal_testing',
+        title: '2. Внутренние тестирования',
+        color: 'bg-yellow-400',
+        projects: [] as Project[]
       },
-      agreement: { 
-        id: 'agreement', 
-        title: '3. Согласование условий', 
-        color: 'bg-orange-400', 
-        projects: [] as Project[] 
+      agreement: {
+        id: 'agreement',
+        title: '3. Согласование условий',
+        color: 'bg-orange-400',
+        projects: [] as Project[]
       },
-      launch: { 
-        id: 'launch', 
-        title: '4. Запуск', 
-        color: 'bg-green-400', 
-        projects: [] as Project[] 
+      launch: {
+        id: 'launch',
+        title: '4. Запуск',
+        color: 'bg-green-400',
+        projects: [] as Project[]
       },
     };
 
@@ -163,7 +163,7 @@ export function ProjectsAndResearch({
       <PageHeader
         title="Проекты и исследования"
         description={
-          activeTab === 'projects' 
+          activeTab === 'projects'
             ? 'Управление пилотными проектами и партнерскими запусками'
             : 'Каталог завершенных исследований и аналитических материалов'
         }
@@ -188,18 +188,16 @@ export function ProjectsAndResearch({
         <div className="flex gap-1">
           <button
             onClick={() => setActiveTab('projects')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
-              activeTab === 'projects'
+            className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'projects'
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2">
               <FolderKanban size={18} />
               <span>Проекты</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs ${
-                activeTab === 'projects' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'projects' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                }`}>
                 {projectsCount}
               </span>
             </div>
@@ -207,18 +205,16 @@ export function ProjectsAndResearch({
 
           <button
             onClick={() => setActiveTab('researches')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
-              activeTab === 'researches'
+            className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'researches'
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2">
               <FlaskConical size={18} />
               <span>Исследования</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs ${
-                activeTab === 'researches' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'researches' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                }`}>
                 {researchesCount}
               </span>
             </div>
@@ -236,18 +232,16 @@ export function ProjectsAndResearch({
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setProjectViewMode('kanban')}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    projectViewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${projectViewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                    }`}
                   title="Kanban доска"
                 >
                   <LayoutGrid size={18} />
                 </button>
                 <button
                   onClick={() => setProjectViewMode('list')}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    projectViewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${projectViewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                    }`}
                   title="Список"
                 >
                   <List size={18} />
@@ -284,11 +278,11 @@ export function ProjectsAndResearch({
           ) : (
             <div className="space-y-3">
               {filteredProjects.map(project => {
-                const author = getUserById(project.authorId);
+                const author = getUserById(project.responsibleId);
                 const creator = getUserById(project.creatorId);
 
                 return (
-                  <Card key={project.id} onClick={() => onProjectClick(project.id)} hoverable>
+                  <Card key={project.id} onClick={() => onProjectClick(project.id)} className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardBody>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
@@ -334,18 +328,16 @@ export function ProjectsAndResearch({
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setResearchViewMode('kanban')}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    researchViewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${researchViewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                    }`}
                   title="Kanban доска"
                 >
                   <LayoutGrid size={18} />
                 </button>
                 <button
                   onClick={() => setResearchViewMode('list')}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    researchViewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${researchViewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                    }`}
                   title="Список"
                 >
                   <List size={18} />
@@ -399,7 +391,7 @@ export function ProjectsAndResearch({
                 const creator = getUserById(research.creatorId);
 
                 return (
-                  <Card key={research.id} onClick={() => onResearchClick(research.id)} hoverable>
+                  <Card key={research.id} onClick={() => onResearchClick(research.id)} className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardBody>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">

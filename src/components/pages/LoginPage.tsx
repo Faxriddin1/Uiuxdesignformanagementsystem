@@ -34,16 +34,6 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     }
   };
 
-  const demoUsers = [
-    { email: 'head@demo.com', role: 'Руководитель управления' },
-    { email: 'dept@demo.com', role: 'Начальник отдела' },
-    { email: 'employee1@demo.com', role: 'Сотрудник' },
-  ];
-
-  const handleDemoLogin = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('demo1234');
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
@@ -107,26 +97,6 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
           </Button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 text-center">
-            Демо-аккаунты (пароль: demo1234)
-          </p>
-          <div className="space-y-2">
-            {demoUsers.map((user) => (
-              <button
-                key={user.email}
-                type="button"
-                onClick={() => handleDemoLogin(user.email)}
-                className="w-full text-left px-3 py-2 text-sm rounded-md
-                         hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
-                         text-gray-700 dark:text-gray-300"
-              >
-                <span className="font-medium">{user.email}</span>
-                <span className="text-gray-500 dark:text-gray-500 ml-2">— {user.role}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </Card>
     </div>
   );

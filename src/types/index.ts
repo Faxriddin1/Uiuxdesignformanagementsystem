@@ -3,7 +3,7 @@
 /**
  * Роли пользователей в системе
  */
-export type UserRole = 
+export type UserRole =
   | 'department_head'      // Начальник Департамента
   | 'management_head'      // Начальник Управления
   | 'division_head'        // Начальник отдела
@@ -17,7 +17,7 @@ export type Division = 'rnd' | 'it_projects';
 /**
  * Категории задач для внешних запросов
  */
-export type TaskCategory = 
+export type TaskCategory =
   | 'standard'                    // Обычные задачи
   | 'external_org'                // Вопросы на сторонней организации
   | 'external_branch'             // Вопросы на сторонней филиала
@@ -26,14 +26,14 @@ export type TaskCategory =
 /**
  * Типы задач (T1/T2) согласно ТЗ
  */
-export type TaskType = 
+export type TaskType =
   | 'T1'  // Секретная (Confidential) - только Начальник Управления
   | 'T2'; // Обычная (Standard) - двухступенчатая приемка
 
 /**
  * Статусы задачи (расширенные для двухуровневой приемки)
  */
-export type TaskStatus = 
+export type TaskStatus =
   | 'new'                        // Новая
   | 'in_progress'                // В работе
   | 'under_division_review'      // На проверке (Нач. отдела) - только T2
@@ -45,7 +45,7 @@ export type TaskStatus =
 /**
  * Маршрут приемки задачи
  */
-export type ApprovalRoute = 
+export type ApprovalRoute =
   | 'management_only'            // Только Начальник Управления (T1)
   | 'division_then_management'   // Начальник отдела → Начальник Управления (T2)
   | 'custom';                    // Кастомный маршрут (для самопостановки)
@@ -58,7 +58,7 @@ export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 /**
  * Статусы внешнего пакета
  */
-export type ExternalPackageStatus = 
+export type ExternalPackageStatus =
   | 'draft'           // Черновик
   | 'sent'            // Отправлен
   | 'awaiting'        // Ожидание ответа
@@ -68,7 +68,7 @@ export type ExternalPackageStatus =
 /**
  * Статусы проекта (фиксированные 1-4)
  */
-export type ProjectStatus = 
+export type ProjectStatus =
   | 'platform_implementation'  // 1. Реализация платформы
   | 'internal_testing'         // 2. Внутренние тестирования
   | 'agreement'                // 3. Согласование условий
@@ -77,7 +77,7 @@ export type ProjectStatus =
 /**
  * Статусы исследования
  */
-export type ResearchStatus = 
+export type ResearchStatus =
   | 'draft'            // Черновик
   | 'under_review'     // На рассмотрении
   | 'rework'           // На доработке
@@ -163,6 +163,7 @@ export interface Task {
   assigneeId: string;                  // Основной исполнитель
   coAssignees?: string[];              // Соисполнители
   creatorId: string;
+  creator?: Partial<User>;
   status: TaskStatus;
   priority?: TaskPriority;
   deadline: Date;
@@ -177,6 +178,7 @@ export interface Task {
   currentResultVersion?: number;       // Номер текущей версии результата
   isSelfAssigned?: boolean;            // Флаг самопостановки
   category?: TaskCategory;             // Категория задачи для внешних запросов
+  resultDescription?: string;          // Описание результата (для удобства UI)
 }
 
 /**
@@ -307,7 +309,7 @@ export interface TaskEditPermissions {
 /**
  * Типы уведомлений
  */
-export type NotificationType = 
+export type NotificationType =
   | 'task_assigned'          // Назначена задача
   | 'task_returned'          // Задача возвращена на доработку
   | 'task_approved'          // Задача одобрена

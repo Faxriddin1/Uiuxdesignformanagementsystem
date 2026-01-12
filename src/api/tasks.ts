@@ -39,10 +39,18 @@ export interface Task {
   result?: string;
   attachments: Array<{
     id: string;
-    file_name: string;
-    file_url: string;
+    name: string;
+    file: string;
+    file_type: string;
     file_size: number;
-    uploaded_at: string;
+    uploaded_by: {
+      id: string;
+      name: string;
+      email: string;
+      avatar?: string;
+    };
+    created_at: string;
+    download_url?: string;
   }>;
   comments_count: number;
   created_at: string;
@@ -161,8 +169,8 @@ export const tasksApi = {
   /**
    * Отправить на рассмотрение
    */
-  async submitForReview(id: string, result: string): Promise<Task> {
-    return apiClient.post<Task>(`/tasks/${id}/submit_for_review/`, { result });
+  async submitForReview(id: string, result_description: string): Promise<Task> {
+    return apiClient.post<Task>(`/tasks/${id}/submit/`, { result_description });
   },
 
   /**
@@ -206,7 +214,7 @@ export const tasksApi = {
   async uploadAttachment(id: string, file: File): Promise<unknown> {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return apiClient.request(`/tasks/${id}/attachments/`, {
       method: 'POST',
       headers: {},

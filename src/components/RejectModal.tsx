@@ -28,8 +28,8 @@ export function RejectModal({ isOpen, onClose, onConfirm, taskTitle }: RejectMod
   const [error, setError] = useState('');
 
   const handleConfirm = () => {
-    if (!reason.trim()) {
-      setError('Необходимо указать причину возврата');
+    if (reason.trim().length < 10) {
+      setError('Причина возврата должна содержать не менее 10 символов');
       return;
     }
 
